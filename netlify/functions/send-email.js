@@ -25,7 +25,7 @@ export async function handler(event) {
 
     const { error } = await resend.emails.send({
       from: "Acme <onboarding@resend.dev>",
-      to: ["your-email@example.com"],
+      to: ["shashank.pawan@gmail.com"],
       subject: `New message from ${formData.name}`,
       html: `<p>Name: ${formData.name}</p>
              <p>Email: ${formData.email}</p>
