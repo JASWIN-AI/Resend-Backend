@@ -1,30 +1,55 @@
 import { Resend } from "resend";
 
+const resend = new Resend(process.env.RESEND_API_KEY);
+
 export async function handler(event) {
+  // Handle preflight (OPTIONS) request for CORS
+  if (event.httpMethod === "OPTIONS") {
+    return {
+      statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*", // You can change "*" to your actual domain
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Methods": "POST, OPTIONS"
+      },
+      body: ""
+    };
+  }
+
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
 
   try {
-    const { name, email, message } = JSON.parse(event.body);
-    const resend = new Resend(process.env.RESEND_API_KEY);
+    const formData = JSON.parse(event.body);
 
-    await resend.emails.send({
+    const { error } = await resend.emails.send({
       from: "Acme <onboarding@resend.dev>",
-      to: ["your-email@example.com"], // Change this
-      subject: `New message from ${name}`,
-      html: `<p>${message}</p><p>From: ${email}</p>`,
+      to: ["your-email@example.com"],
+      subject: `New message from ${formData.name}`,
+      html: `<p>Name: ${formData.name}</p>
+             <p>Email: ${formData.email}</p>
+             <p>Message: ${formData.message}</p>`
     });
+
+    if (error) {
+      return {
+        statusCode: 500,
+        headers: { "Access-Control-Allow-Origin": "*" },
+        body: JSON.stringify({ success: false, error })
+      };
+    }
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ success: true }),
+      headers: { "Access-Control-Allow-Origin": "*" },
+      body: JSON.stringify({ success: true })
     };
   } catch (err) {
-    console.error("Send email error:", err);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "Failed to send email" }),
+      headers: { "Access-Control-Allow-Origin": "*" },
+      body: JSON.stringify({ success: false, error: err.message })
     };
   }
 }
