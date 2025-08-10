@@ -1,6 +1,5 @@
 // netlify/functions/send-email.js
 import { Resend } from "resend";
-import fetch from "node-fetch";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -62,34 +61,12 @@ export async function handler(event) {
       !formData.name ||
       !formData.email ||
       !formData.message ||
-      !formData.token || // reCAPTCHA token from frontend
       !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
     ) {
       return {
         statusCode: 400,
         headers,
         body: JSON.stringify({ success: false, error: "Invalid input" })
-      };
-    }
-
-    // --- Verify reCAPTCHA ---
-    const recaptchaSecret = process.env.RECAPTCHA_SECRET_KEY;
-    const recaptchaResponse = await fetch(
-      `https://www.google.com/recaptcha/api/siteverify`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `secret=${recaptchaSecret}&response=${formData.token}`
-      }
-    );
-
-    const recaptchaData = await recaptchaResponse.json();
-
-    if (!recaptchaData.success || recaptchaData.score < 0.5) {
-      return {
-        statusCode: 403,
-        headers,
-        body: JSON.stringify({ success: false, error: "reCAPTCHA failed" })
       };
     }
 
